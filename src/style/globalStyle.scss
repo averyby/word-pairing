@@ -1,0 +1,12 @@
+body {
+	background: lightgreen !important;
+	p {
+		color: blue;
+	}
+}
+
+:local(.box) {
+	background-color: white;
+	padding: 1em;
+	border: 1px solid deeppink;
+};
