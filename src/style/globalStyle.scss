@@ -21,7 +21,7 @@ $borderRadius: .3em;
 		border-radius: $borderRadius;
 	}
 	.item {
-		max-width: 100px;
+		max-width: 150px;
 		position: absolute;
 		color: darkblue;
 		background: rgba(255, 255, 255, 0.8);
@@ -35,5 +35,9 @@ $borderRadius: .3em;
 	}
 	.item.appear {
 		opacity: 1;
+	}
+	.highlight {
+		background: #f4f116;
+		transition: background .5s cubic-bezier(.31,-0.52,.8,1.51);
 	}
 }

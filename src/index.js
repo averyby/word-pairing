@@ -112,13 +112,13 @@ function startApp() {
 $(startApp);
 
 function createPair(item) {
-	let word = createItem(item.word);
-	let meaning = createItem(item.meaning);
+	let word = createItem(item.word, 'word');
+	let meaning = createItem(item.meaning, 'meaning');
 
 	word.data('tag', item.tag);
 	meaning.data('tag', item.tag);
 }
-function createItem(text) {
+function createItem(text, type) {
 	let ele = $(`<div class='item'>${text}</div>`);
 	let posOk = false;
 	let positionOk = testerCreator(tryTimes);
@@ -127,6 +127,7 @@ function createItem(text) {
 		posOk = putOntoPage(ele, positionOk);
 	} while(!posOk);
 	
+	ele.addClass(type);
 	makeDraggable(ele);
 	makeDroppable(ele);
 	return ele;
@@ -150,17 +151,15 @@ function makeDraggable(e) {
 		stop: (event, ui) => {
 			let dragSource = $(event.target);
 			
-			if (dragSource.data('handledByDrop')) {
-				let posid = dragSource.data('posid');
-				let prevPos = getPrevPos(posid);
-				let newLeftTop = getNewValidLeftTop(prevPos);
-				dragSource.animate({
-					left: newLeftTop.x,
-					top: newLeftTop.y
-				}, 600, 'easeInOutBack', function() {});
-				updatePosition(posid, {...prevPos, leftTop: newLeftTop});
-			}
-			dragSource.removeData('handledByDrop');
+			let posid = dragSource.data('posid');
+			let prevPos = getPrevPos(posid);
+			let newLeftTop = getNewValidLeftTop(prevPos);
+			dragSource.animate({
+				left: newLeftTop.x,
+				top: newLeftTop.y
+			}, 600, 'easeInOutBack', function() {});
+			updatePosition(posid, {...prevPos, leftTop: newLeftTop});
+
 		}
 	});
 }
@@ -183,16 +182,21 @@ function removeItemByTag(t) {
 function makeDroppable(e) {
 	e.droppable({
 		tolerance: 'touch',
+		accept: e.hasClass('word') ? '.meaning' : '.word',
+		activeClass: 'highlight',
 		drop: (event, ui) => {
 			let dropTarget = $(event.target);
 			let dragSource = ui.draggable;
-			dragSource.data('handledByDrop', true);
 			if (dropTarget.data('tag') === dragSource.data('tag')) {
 				removePositionById(dropTarget.data('posid'));
 				removePositionById(dragSource.data('posid'));
 				removeItemByTag(dragSource.data('tag'));
-				dropTarget.remove();
-				dragSource.remove();
+				dropTarget.animate({ opacity: 0 }, 600, 'easeInOutBack', function() {
+					dropTarget.remove();
+				});
+				dragSource.animate({ opacity: 0 }, 600, 'easeInOutBack', function() {
+					dragSource.remove();
+				});
 				return;
 			}
 		}
