@@ -154,11 +154,11 @@ function makeDraggable(e) {
 				let posid = dragSource.data('posid');
 				let prevPos = getPrevPos(posid);
 				let newLeftTop = getNewValidLeftTop(prevPos);
-				dragSource.css('left', newLeftTop.x);
-				dragSource.css('top', newLeftTop.y);
+				dragSource.animate({
+					left: newLeftTop.x,
+					top: newLeftTop.y
+				}, 600, 'easeInOutBack', function() {});
 				updatePosition(posid, {...prevPos, leftTop: newLeftTop});
-			} else {
-				// dragSource.draggable("option", "revert", true);
 			}
 			dragSource.removeData('handledByDrop');
 		}
