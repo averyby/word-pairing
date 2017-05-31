@@ -1,85 +1,196 @@
 import v4 from 'uuid';
+import { throttle } from 'lodash';
 import './style/globalStyle.scss';
 
-let putOntoPage = (() => {
-	let positions = [];
+let positions = [];
+let tryTimes = 20;
+let containerWidth;
+let containerHeight;
 
-	return (e) => {
-		e.appendTo('#app');
-		let pos = {
-			leftTop: {
-				x: parseFloat(e.css('left')),
-				y: parseFloat(e.css('top'))  
-			},
-			width: e.outerWidth(),
-			height: e.outerHeight()
-		};
-		if (positionOk(pos, positions)) {
-			positions.push({ id: v4(), pos });
-			return true;
-		}
-		e.remove();
-		return false;
-	}
+var delay = (function(){
+  var timer = 0;
+  return function(callback, ms){
+    clearTimeout (timer);
+    timer = setTimeout(callback, ms);
+  };
 })();
+window.onresize = function() {
+	delay(function() {
+		$('#app').empty();
+		positions = [];
+		startApp();
+	}, 500);
+};
 
-function positionOk({leftTop, width, height}, positions) {
-	let { x, y } = leftTop;
+let putOntoPage = (e, positionOk) => {
+	e.appendTo('#app');
+	let pos = {
+		leftTop: {
+			x: parseFloat(e.css('left')),
+			y: parseFloat(e.css('top'))  
+		},
+		width: e.outerWidth(),
+		height: e.outerHeight()
+	};
+	if (positionOk(pos)) {
+		makeAppear(e);
+		storePosition(e, pos);
+		return true;
+	}
+	e.remove();
+	return false;
+};
 
-	if (x + width > 490 || y + height > 490) return false;
-	
-	return positions.every(({pos}, i) => (
-		x > pos.leftTop.x + pos.width ||
-		x + width < pos.leftTop.x ||
-		y > pos.leftTop.y + pos.height ||
-		y + height < pos.leftTop.y
-	));
+function makeAppear(e) {
+	e.addClass('appear');
+} 
+function storePosition(e, pos) {
+	let id = v4();
+	e.data('id', id);
+	positions.push({ id, pos });
 }
+function testerCreator(limit) {
+	let tried = 0;
 
-$(function() {
+	return ({leftTop, width, height}) => {
+		let { x, y } = leftTop;
+		if (tried > 100) {
+			return true 
+		}
+		if (x + width > containerWidth || y + height > containerHeight) return false;
+
+		if (limit != null && tried >= limit) return true;
+		tried++;	
+		return positions.every(({pos}, i) => (
+			x > pos.leftTop.x + pos.width ||
+			x + width < pos.leftTop.x ||
+			y > pos.leftTop.y + pos.height ||
+			y + height < pos.leftTop.y
+		));
+	}
+}
+function getNewValidLeftTop({width, height}) {
+	let newLeftTop;
+	let positionOk = testerCreator(tryTimes);
+	do {
+		newLeftTop = generateRandomPosition();
+	} while (!positionOk({leftTop: newLeftTop, width, height}));
+
+	return newLeftTop;
+}
+function startApp() {
 	let dict = [
 		{
+			id: v4(),
 			word: 'hello',
 			meaning: 'used to greet others or to cause attention'
 		},
 		{
+			id: v4(),
 			word: 'portable',
 			meaning: 'easy to carry'
+		},
+		{
+			id: v4(),
+			word: 'contrived',
+			meaning: 'deliberately created rather than arising naturally or spontaneously'
+		},
+		{
+			id: v4(),
+			word: 'interpolate',
+			meaning: 'insert (something) between fixed points'
+		},
+		{
+			id: v4(),
+			word: 'tinker',
+			meaning: 'attempt to repair or improve something in a casual or desultory way, often to no useful effect'
 		}
 	];
 
-	dict.forEach((item, index) => {
-		createItem(item.word);
-		createItem(item.meaning);
-	});
-});
+	containerWidth = $('#app').width() - 10;
+	containerHeight = $('#app').height() - 10;
+	dict.forEach((item, index) => createPair(item));
+};
+$(startApp);
 
+function createPair(item) {
+	let word = createItem(item.word);
+	let meaning = createItem(item.meaning);
+
+	word.data('tag', item.id);
+	meaning.data('tag', item.id);
+}
 function createItem(text) {
 	let ele = $(`<div class='item'>${text}</div>`);
 	let posOk = false;
+	let positionOk = testerCreator(tryTimes);
 	do {
 		setPosition(ele);
-		posOk = putOntoPage(ele);
+		posOk = putOntoPage(ele, positionOk);
 	} while(!posOk);
 	
 	makeDraggable(ele);
+	makeDroppable(ele);
+	return ele;
 }
-function generateRandomPosition(x = 450, y = 450) {
+function generateRandomPosition() {
 	return {
-		left: x * Math.random(),
-		top: y * Math.random()
+		x: (containerWidth - 40) * Math.random(),
+		y: (containerHeight - 40) * Math.random()
 	};
 }
 function setPosition(e) {
 	let pos = generateRandomPosition();
 
-	e.css('left', pos.left);
-	e.css('top', pos.top);
+	e.css('left', pos.x);
+	e.css('top', pos.y);
 }
 function makeDraggable(e) {
 	e.draggable({
 		containment: 'parent',
-		stack: '.item'
+		stack: '.item',
+		stop: (event, ui) => {
+			let dragSource = $(event.target);
+			
+			if (dragSource.data('handledByDrop')) {
+				let id = dragSource.data('id');
+				let prevPos = getPrevPos(id);
+				let newLeftTop = getNewValidLeftTop(prevPos);
+				dragSource.css('left', newLeftTop.x);
+				dragSource.css('top', newLeftTop.y);
+				updatePosition(id, {...prevPos, leftTop: newLeftTop});
+				console.log(positions);
+			} else {
+				// dragSource.draggable("option", "revert", true);
+			}
+			dragSource.removeData('handledByDrop');
+		}
+	});
+}
+
+function getPrevPos(id) {
+	return positions.find((pos, i) => pos.id === id).pos;
+}
+function updatePosition(id, newpos) {
+	positions = positions.map((pos, i) => {
+		if (pos.id != id) return pos;
+		return {id, pos: newpos};
+	});
+}
+function makeDroppable(e) {
+	e.droppable({
+		tolerance: 'touch',
+		drop: (event, ui) => {
+			let dropTarget = $(event.target);
+			let dragSource = ui.draggable;
+			dragSource.data('handledByDrop', true);
+			if (dropTarget.data('tag') === dragSource.data('tag')) {
+				dropTarget.remove();
+				dragSource.remove();
+				return;
+			}
+				
+		}
 	});
 }
 

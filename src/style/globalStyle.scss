@@ -1,12 +1,19 @@
 $borderRadius: .3em;
 :global {
-	body {
+	body, html {
 		background: lightyellow;
+		height: 100%;
+		min-width: 300px;
+		min-height: 300px;
+		h2 {
+			text-align: center;
+			margin: 20px;
+		}
 	}
 
 	#app {
-		width: 500px;
-		height: 500px;
+		width: 90%;
+		height: 80%;
 		background: gray;
 		margin: auto;
 		position: relative;
@@ -23,5 +30,10 @@ $borderRadius: .3em;
 		padding: 4px 8px;
 		border-radius: $borderRadius;
 		cursor: move;
+		opacity: 0;
+		transition: opacity .8s;
+	}
+	.item.appear {
+		opacity: 1;
 	}
 }
