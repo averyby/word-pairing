@@ -1,12 +1,27 @@
-body {
-	background: lightgreen !important;
-	p {
-		color: blue;
+$borderRadius: .3em;
+:global {
+	body {
+		background: lightyellow;
+	}
+
+	#app {
+		width: 500px;
+		height: 500px;
+		background: gray;
+		margin: auto;
+		position: relative;
+		border: 5px solid black;
+		border-radius: $borderRadius;
+	}
+	.item {
+		max-width: 100px;
+		position: absolute;
+		color: darkblue;
+		background: rgba(255, 255, 255, 0.8);
+		display: inline-block;
+		border: 1px solid black;
+		padding: 4px 8px;
+		border-radius: $borderRadius;
+		cursor: move;
 	}
 }
-
-:local(.box) {
-	background-color: white;
-	padding: 1em;
-	border: 1px solid deeppink;
-};
