@@ -10,27 +10,27 @@ let containerHeight;
 
 let dict = [
 	{
-		id: v4(),
+		tag: v4(),
 		word: 'hello',
 		meaning: 'used to greet others or to cause attention'
 	},
 	{
-		id: v4(),
+		tag: v4(),
 		word: 'portable',
 		meaning: 'easy to carry'
 	},
 	{
-		id: v4(),
+		tag: v4(),
 		word: 'contrived',
 		meaning: 'deliberately created rather than arising naturally or spontaneously'
 	},
 	{
-		id: v4(),
+		tag: v4(),
 		word: 'interpolate',
 		meaning: 'insert (something) between fixed points'
 	},
 	{
-		id: v4(),
+		tag: v4(),
 		word: 'tinker',
 		meaning: 'attempt to repair or improve something in a casual or desultory way, often to no useful effect'
 	}
@@ -83,9 +83,6 @@ function testerCreator(limit) {
 
 	return ({leftTop, width, height}) => {
 		let { x, y } = leftTop;
-		if (tried > 100) {
-			return true 
-		}
 		if (x + width > containerWidth || y + height > containerHeight) return false;
 
 		if (limit != null && tried >= limit) return true;
@@ -118,8 +115,8 @@ function createPair(item) {
 	let word = createItem(item.word);
 	let meaning = createItem(item.meaning);
 
-	word.data('tag', item.id);
-	meaning.data('tag', item.id);
+	word.data('tag', item.tag);
+	meaning.data('tag', item.tag);
 }
 function createItem(text) {
 	let ele = $(`<div class='item'>${text}</div>`);
@@ -180,6 +177,9 @@ function updatePosition(posid, newpos) {
 function removePositionById(posid) {
 	positions = positions.filter((item, i) => item.posid != posid);
 }
+function removeItemByTag(t) {
+	dict = dict.filter((item, i) => item.tag != t);
+}
 function makeDroppable(e) {
 	e.droppable({
 		tolerance: 'touch',
@@ -190,6 +190,7 @@ function makeDroppable(e) {
 			if (dropTarget.data('tag') === dragSource.data('tag')) {
 				removePositionById(dropTarget.data('posid'));
 				removePositionById(dragSource.data('posid'));
+				removeItemByTag(dragSource.data('tag'));
 				dropTarget.remove();
 				dragSource.remove();
 				return;
