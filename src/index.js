@@ -1,11 +1,40 @@
 import v4 from 'uuid';
 import { throttle } from 'lodash';
+import { } from './utils';
 import './style/globalStyle.scss';
 
 let positions = [];
 let tryTimes = 20;
 let containerWidth;
 let containerHeight;
+
+let dict = [
+	{
+		id: v4(),
+		word: 'hello',
+		meaning: 'used to greet others or to cause attention'
+	},
+	{
+		id: v4(),
+		word: 'portable',
+		meaning: 'easy to carry'
+	},
+	{
+		id: v4(),
+		word: 'contrived',
+		meaning: 'deliberately created rather than arising naturally or spontaneously'
+	},
+	{
+		id: v4(),
+		word: 'interpolate',
+		meaning: 'insert (something) between fixed points'
+	},
+	{
+		id: v4(),
+		word: 'tinker',
+		meaning: 'attempt to repair or improve something in a casual or desultory way, often to no useful effect'
+	}
+];
 
 var delay = (function(){
   var timer = 0;
@@ -46,8 +75,8 @@ function makeAppear(e) {
 } 
 function storePosition(e, pos) {
 	let id = v4();
-	e.data('id', id);
-	positions.push({ id, pos });
+	e.data('posid', id);
+	positions.push({ posid: id, pos });
 }
 function testerCreator(limit) {
 	let tried = 0;
@@ -79,34 +108,6 @@ function getNewValidLeftTop({width, height}) {
 	return newLeftTop;
 }
 function startApp() {
-	let dict = [
-		{
-			id: v4(),
-			word: 'hello',
-			meaning: 'used to greet others or to cause attention'
-		},
-		{
-			id: v4(),
-			word: 'portable',
-			meaning: 'easy to carry'
-		},
-		{
-			id: v4(),
-			word: 'contrived',
-			meaning: 'deliberately created rather than arising naturally or spontaneously'
-		},
-		{
-			id: v4(),
-			word: 'interpolate',
-			meaning: 'insert (something) between fixed points'
-		},
-		{
-			id: v4(),
-			word: 'tinker',
-			meaning: 'attempt to repair or improve something in a casual or desultory way, often to no useful effect'
-		}
-	];
-
 	containerWidth = $('#app').width() - 10;
 	containerHeight = $('#app').height() - 10;
 	dict.forEach((item, index) => createPair(item));
@@ -153,13 +154,12 @@ function makeDraggable(e) {
 			let dragSource = $(event.target);
 			
 			if (dragSource.data('handledByDrop')) {
-				let id = dragSource.data('id');
-				let prevPos = getPrevPos(id);
+				let posid = dragSource.data('posid');
+				let prevPos = getPrevPos(posid);
 				let newLeftTop = getNewValidLeftTop(prevPos);
 				dragSource.css('left', newLeftTop.x);
 				dragSource.css('top', newLeftTop.y);
-				updatePosition(id, {...prevPos, leftTop: newLeftTop});
-				console.log(positions);
+				updatePosition(posid, {...prevPos, leftTop: newLeftTop});
 			} else {
 				// dragSource.draggable("option", "revert", true);
 			}
@@ -168,14 +168,17 @@ function makeDraggable(e) {
 	});
 }
 
-function getPrevPos(id) {
-	return positions.find((pos, i) => pos.id === id).pos;
+function getPrevPos(posid) {
+	return positions.find((pos, i) => pos.posid === posid).pos;
 }
-function updatePosition(id, newpos) {
+function updatePosition(posid, newpos) {
 	positions = positions.map((pos, i) => {
-		if (pos.id != id) return pos;
-		return {id, pos: newpos};
+		if (pos.posid != posid) return pos;
+		return {posid, pos: newpos};
 	});
+}
+function removePositionById(posid) {
+	positions = positions.filter((item, i) => item.posid != posid);
 }
 function makeDroppable(e) {
 	e.droppable({
@@ -185,11 +188,12 @@ function makeDroppable(e) {
 			let dragSource = ui.draggable;
 			dragSource.data('handledByDrop', true);
 			if (dropTarget.data('tag') === dragSource.data('tag')) {
+				removePositionById(dropTarget.data('posid'));
+				removePositionById(dragSource.data('posid'));
 				dropTarget.remove();
 				dragSource.remove();
 				return;
 			}
-				
 		}
 	});
 }
