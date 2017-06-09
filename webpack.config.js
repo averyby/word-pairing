@@ -90,7 +90,6 @@ module.exports = {
         // According to HtmlWebpackPlugin config, it's possible that 
         // not all entry chunks are included into index.html
         app: ['./src/index.js'],
-        about: './src/about.js',
         bootstrap: bootstrapConfig,
         commons: ['react', 'react-dom']
     },
